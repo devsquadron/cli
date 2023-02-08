@@ -9,7 +9,10 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/devsquadron/ds/configuration"
+	"github.com/devsquadron/ds/constants"
 	"github.com/devsquadron/ds/exception"
+	"github.com/devsquadron/requests"
 
 	"github.com/devsquadron/models"
 
@@ -174,4 +177,21 @@ func (sys *System) CheckoutBranch(tsk *models.Task) error {
 			fmt.Sprintf("%d-%s", tsk.ID, strings.Replace(tsk.Title, " ", "_", -1)),
 		},
 	)
+}
+
+func GlobalSetup() (
+	SystemType,
+	configuration.ConfigurationType,
+	*requests.TaskClient,
+	*requests.DeveloperClient,
+	*requests.TeamClient,
+) {
+	fs := exfs.NewFileSystem()
+	sys := NewSystem(fs)
+
+	cfg := configuration.NewConfiguration(fs)
+	tsk := requests.NewTaskClient(constants.ENDPOINT)
+	dev := requests.NewDeveloperClient(constants.ENDPOINT)
+	tm := requests.NewTeamClient(constants.ENDPOINT)
+	return sys, cfg, tsk, dev, tm
 }

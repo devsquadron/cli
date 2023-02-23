@@ -76,6 +76,8 @@ func listTagCount() error {
 	if err != nil {
 		return err
 	}
+	fmt.Println(fmt.Sprintf("status %s", []string{models.Status.New, models.Status.Developing}))
+	message.Header()
 	for _, tgD := range *tgTskDst {
 		fmt.Println(tgD.Count, tgD.Tag)
 		newTgCache = append(newTgCache, tgD.Tag)

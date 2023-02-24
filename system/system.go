@@ -9,9 +9,9 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/devsquadron/ds/configuration"
-	"github.com/devsquadron/ds/constants"
-	"github.com/devsquadron/ds/exception"
+	"github.com/devsquadron/cli/configuration"
+	"github.com/devsquadron/cli/constants"
+	"github.com/devsquadron/cli/exception"
 	"github.com/devsquadron/requests"
 
 	"github.com/devsquadron/models"

@@ -1,4 +1,4 @@
-module github.com/devsquadron/ds
+module github.com/devsquadron/cli
 
 go 1.20
 

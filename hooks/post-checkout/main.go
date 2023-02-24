@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/devsquadron/ds/hooks"
+	"github.com/devsquadron/cli/hooks"
 )
 
 func main() {

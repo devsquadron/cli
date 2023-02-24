@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/devsquadron/ds/message"
+	"github.com/devsquadron/cli/message"
 )
 
 func CheckErr(err error) {

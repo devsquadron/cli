@@ -3,9 +3,9 @@ package hooks
 import (
 	"github.com/devsquadron/requests"
 
-	"github.com/devsquadron/ds/configuration"
+	"github.com/devsquadron/cli/configuration"
 
-	"github.com/devsquadron/ds/system"
+	"github.com/devsquadron/cli/system"
 )
 
 var (

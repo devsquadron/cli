@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/devsquadron/ds/hooks"
+	"github.com/devsquadron/cli/hooks"
 
-	"github.com/devsquadron/ds/message"
+	"github.com/devsquadron/cli/message"
 
 	"github.com/devsquadron/models"
 )

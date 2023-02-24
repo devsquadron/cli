@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/devsquadron/ds/message"
+	"github.com/devsquadron/cli/message"
 
 	"github.com/devsquadron/models"
 

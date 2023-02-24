@@ -3,7 +3,7 @@ package hooks
 import (
 	"fmt"
 
-	"github.com/devsquadron/ds/message"
+	"github.com/devsquadron/cli/message"
 
 	"github.com/devsquadron/models"
 )

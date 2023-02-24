@@ -9,11 +9,11 @@ import (
 
 	"github.com/devsquadron/requests"
 
-	"github.com/devsquadron/ds/configuration"
-	"github.com/devsquadron/ds/constants"
-	"github.com/devsquadron/ds/exception"
+	"github.com/devsquadron/cli/configuration"
+	"github.com/devsquadron/cli/constants"
+	"github.com/devsquadron/cli/exception"
 
-	"github.com/devsquadron/ds/system"
+	"github.com/devsquadron/cli/system"
 
 	"github.com/nanvenomous/exfs"
 	"github.com/nanvenomous/snek"

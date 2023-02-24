@@ -8,10 +8,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/devsquadron/ds/message"
-
+	"github.com/devsquadron/cli/message"
 	"github.com/devsquadron/models"
-
 	"github.com/spf13/cobra"
 )
 

@@ -4,7 +4,7 @@
 
 - clone the repository
 ```
-git clone https://github.com/devsquadron/ds.git
+git clone https://github.com/devsquadron/cli.git
 cd ds
 ```
 

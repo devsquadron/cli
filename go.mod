@@ -1,4 +1,4 @@
-module github.com/devsquadron/ds
+module github.com/devsquadron/cli
 
 go 1.20
 
@@ -13,7 +13,7 @@ require (
 )
 
 require (
-	github.com/inconshreveable/mousetrap v1.1.0 // indirect
+	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	go.mongodb.org/mongo-driver v1.11.1 // indirect
 	golang.org/x/sys v0.5.0 // indirect

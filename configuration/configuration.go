@@ -11,9 +11,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/devsquadron/ds/constants"
+	"github.com/devsquadron/cli/constants"
 
-	"github.com/devsquadron/ds/exception"
+	"github.com/devsquadron/cli/exception"
 
 	"github.com/nanvenomous/exfs"
 	"gopkg.in/yaml.v3"

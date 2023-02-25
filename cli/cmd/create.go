@@ -51,11 +51,11 @@ var createCmd = &cobra.Command{
 		tsk.Criterion = tskBody
 
 		tm := Cfg.Team()
-		err = TaskClient.CreateNewTask(Cfg.Token(), &tsk, tm)
+		tsk.ID, err = TaskClient.CreateNewTask(Cfg.Token(), &tsk, tm)
 		if err != nil {
 			return err
 		}
-		fmt.Println(message.Green("Success", "created a new task!"))
+		fmt.Println(message.Green("Success", fmt.Sprintf("%d", tsk.ID)))
 
 		return nil
 	},

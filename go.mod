@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/devsquadron/models v0.0.1
-	github.com/devsquadron/requests v0.0.0-20230208213353-c5a295186fde
+	github.com/devsquadron/requests v0.0.1
 	github.com/nanvenomous/exfs v0.0.8
 	github.com/nanvenomous/snek v0.0.1
 	github.com/spf13/cobra v1.6.1

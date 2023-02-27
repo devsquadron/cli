@@ -2,7 +2,7 @@ fpath="/usr/local/share/zsh/site-functions"
 binpath="/usr/local/bin"
 
 build: clean prep
-	go build -o ./ds cli/main.go
+	go build -o ./ds main.go
 
 prep:
 	go mod tidy
@@ -17,7 +17,7 @@ zsh-completions:
 all: clean prep build git-hooks
 
 prod: clean prep
-	go build -tags prod -o ./ds cli/main.go
+	go build -tags prod -o ./ds main.go
 
 prod-all: prod git-hooks-prod
 

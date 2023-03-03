@@ -4,83 +4,83 @@ Copyright © 2022 nanvenomous mrgarelli@gmail.com
 package cmd
 
 import (
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/devsquadron/cli/system"
 	"github.com/spf13/cobra"
 )
 
-func getOrSetConfig(
-	prmpt string,
-	checkFun func() (string, error),
-	defFun func() (string, error),
-	setFun func(string),
-) error {
-	var (
-		err                      error
-		existingCfg, gitCfg, inp string
-	)
-	existingCfg, _ = checkFun()
-	if existingCfg == "" {
-		gitCfg, _ = defFun()
-		inp, err = Sys.GetText(prmpt, gitCfg)
-		if err != nil {
-			return err
-		}
-		setFun(inp)
-	}
-	return nil
-}
+var (
+	noCacheFlag bool
+	cfgPrompts  []system.ConfigPrompt
+)
 
 func runInit() error {
 	var (
-		err error
+		err          error
+		outMod       tea.Model
+		m            system.ConfigurationTextInputModel
+		toGetPrompts []system.ConfigPrompt
+		existingCfg  string
 	)
-	err = getOrSetConfig(
-		"Username",
-		Cfg.UsernameE,
-		Sys.GitUsername,
-		Cfg.SetUsername,
-	)
-	if err != nil {
-		return err
-	}
 
-	err = getOrSetConfig(
-		"Email",
-		Cfg.EmailE,
-		Sys.GitEmail,
-		Cfg.SetEmail,
-	)
-	if err != nil {
-		return err
-	}
-
-	return getOrSetConfig(
-		"Team",
-		func() (string, error) {
-			// when ds init is called we are either creating or updating a team
-			return "", nil
+	cfgPrompts = []system.ConfigPrompt{
+		{
+			Prompt:      "Username",
+			CheckFunc:   Cfg.UsernameE,
+			DefaultFunc: Sys.GitUsername,
+			SetFunc:     Cfg.SetUsername,
 		},
-		Cfg.TeamE,
-		Cfg.SetTeam,
-	)
+		{
+			Prompt:      "Email",
+			CheckFunc:   Cfg.EmailE,
+			DefaultFunc: Sys.GitEmail,
+			SetFunc:     Cfg.SetEmail,
+		},
+		{
+			Prompt: "Team",
+			CheckFunc: func() (string, error) {
+				// when ds init is called we are either creating or updating a team
+				return "", nil
+			},
+			DefaultFunc: Cfg.TeamE,
+			SetFunc:     Cfg.SetTeam,
+		},
+	}
+	for _, cp := range cfgPrompts {
+		existingCfg, _ = cp.CheckFunc()
+		if existingCfg == "" || noCacheFlag {
+			toGetPrompts = append(toGetPrompts, cp)
+		}
+	}
+	m = system.InitialConfigurationTextInputModel(toGetPrompts, noCacheFlag)
+
+	outMod, err = tea.NewProgram(m).Run()
+
+	if m, ok := outMod.(system.ConfigurationTextInputModel); ok {
+		for i, ti := range m.Inputs {
+			val := ti.Value()
+			if val == "" {
+				toGetPrompts[i].SetFunc(ti.Placeholder)
+			} else {
+				toGetPrompts[i].SetFunc(val)
+			}
+		}
+	}
+	return err
 }
 
 var initCmd = &cobra.Command{
 	Use:   "init",
 	Short: "initialize a devsquadron repo",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		var (
-			err error
-		)
-
-		err = runInit()
-		if err != nil {
-			return err
-		}
-
-		return nil
+		return runInit()
 	},
 }
 
 func init() {
+	initCmd.Flags().BoolVarP(
+		&noCacheFlag, "no-cache", "n", false,
+		"ignores cache when setting config (so you can revisit initial decisions)",
+	)
 	rootCmd.AddCommand(initCmd)
 }

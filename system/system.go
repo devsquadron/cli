@@ -1,7 +1,6 @@
 package system
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
 	"os"
@@ -16,6 +15,9 @@ import (
 
 	"github.com/devsquadron/models"
 
+	"github.com/charmbracelet/bubbles/textinput"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/nanvenomous/exfs"
 	"golang.org/x/term"
 )
@@ -31,7 +33,6 @@ type SystemType interface {
 	GetPassword() (string, error)
 	GitUsername() (string, error)
 	GitEmail() (string, error)
-	GetText(string, string) (string, error)
 	GetConfirmedPassword() (string, string, error)
 	EditTempMarkdownFileDS(txt string) (string, error)
 	CheckoutBranch(tsk *models.Task) error
@@ -102,36 +103,6 @@ func (sys *System) GitEmail() (string, error) {
 	return strings.TrimSpace(outs), err
 }
 
-func (sys *System) GetText(prmpt string, dflt string) (string, error) {
-	var (
-		err   error
-		input string
-		rdr   *bufio.Reader
-	)
-	if dflt != "" {
-		fmt.Print(
-			fmt.Sprintf("%s (%s): ", prmpt, dflt),
-		)
-	} else {
-		fmt.Print(
-			fmt.Sprintf("%s: ", prmpt),
-		)
-	}
-	rdr = bufio.NewReader(os.Stdin)
-	input, err = rdr.ReadString('\n')
-	if err != nil {
-		return "", err
-	}
-
-	input = strings.TrimSuffix(input, "\n")
-	if input != "" {
-		return input, nil
-	} else if dflt != "" {
-		return dflt, nil
-	}
-	return "", errors.New(fmt.Sprintf("you must enter a %s", prmpt))
-}
-
 func (sys *System) GetConfirmedPassword() (string, string, error) {
 	var (
 		err         error
@@ -194,4 +165,148 @@ func GlobalSetup() (
 	dev := requests.NewDeveloperClient(constants.ENDPOINT)
 	tm := requests.NewTeamClient(constants.ENDPOINT)
 	return sys, cfg, tsk, dev, tm
+}
+
+type ConfigPrompt struct {
+	Prompt      string
+	CheckFunc   func() (string, error)
+	DefaultFunc func() (string, error)
+	SetFunc     func(string)
+}
+
+var (
+	focusedStyle        = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
+	blurredStyle        = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
+	cursorStyle         = focusedStyle.Copy()
+	noStyle             = lipgloss.NewStyle()
+	helpStyle           = blurredStyle.Copy()
+	cursorModeHelpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("244"))
+
+	focusedButton = focusedStyle.Copy().Render("[ Submit ]")
+	blurredButton = fmt.Sprintf("[ %s ]", blurredStyle.Render("Submit"))
+)
+
+type ConfigurationTextInputModel struct {
+	focusIndex int
+	Inputs     []textinput.Model
+	prompts    []string
+	cursorMode textinput.CursorMode
+}
+
+func InitialConfigurationTextInputModel(cps []ConfigPrompt, noCacheFlag bool) ConfigurationTextInputModel {
+	var (
+		gitCfg string
+	)
+	m := ConfigurationTextInputModel{
+		Inputs: []textinput.Model{},
+	}
+
+	var t textinput.Model
+	for i := range cps {
+		t = textinput.New()
+		t.CursorStyle = cursorStyle
+		t.CharLimit = 32
+		t.Prompt = cps[i].Prompt + ": "
+		gitCfg, _ = cps[i].DefaultFunc()
+		t.Placeholder = gitCfg
+
+		switch i {
+		case 0:
+			t.PromptStyle = focusedStyle
+			t.TextStyle = focusedStyle
+		case 1:
+			t.CharLimit = 64
+		}
+
+		m.Inputs = append(m.Inputs, t)
+	}
+	m.Inputs[0].Focus()
+
+	return m
+}
+
+func (m ConfigurationTextInputModel) Init() tea.Cmd {
+	return textinput.Blink
+}
+
+func (m ConfigurationTextInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "ctrl+c", "esc":
+			for i := range m.Inputs {
+				m.Inputs[i].SetValue(m.Inputs[i].Placeholder)
+			}
+			return m, tea.Quit
+
+		case "tab", "shift+tab", "enter", "up", "down":
+			s := msg.String()
+
+			if s == "enter" && m.focusIndex == len(m.Inputs) {
+				return m, tea.Quit
+			}
+
+			if s == "up" || s == "shift+tab" {
+				m.focusIndex--
+			} else {
+				m.focusIndex++
+			}
+
+			if m.focusIndex > len(m.Inputs) {
+				m.focusIndex = 0
+			} else if m.focusIndex < 0 {
+				m.focusIndex = len(m.Inputs)
+			}
+
+			cmds := make([]tea.Cmd, len(m.Inputs))
+			for i := 0; i <= len(m.Inputs)-1; i++ {
+				if i == m.focusIndex {
+					cmds[i] = m.Inputs[i].Focus()
+					m.Inputs[i].PromptStyle = focusedStyle
+					m.Inputs[i].TextStyle = focusedStyle
+					continue
+				}
+				m.Inputs[i].Blur()
+				m.Inputs[i].PromptStyle = noStyle
+				m.Inputs[i].TextStyle = noStyle
+			}
+
+			return m, tea.Batch(cmds...)
+		}
+	}
+
+	cmd := m.updateInputs(msg)
+
+	return m, cmd
+}
+
+func (m *ConfigurationTextInputModel) updateInputs(msg tea.Msg) tea.Cmd {
+	cmds := make([]tea.Cmd, len(m.Inputs))
+
+	for i := range m.Inputs {
+		m.Inputs[i], cmds[i] = m.Inputs[i].Update(msg)
+	}
+
+	return tea.Batch(cmds...)
+}
+
+func (m ConfigurationTextInputModel) View() string {
+	var b strings.Builder
+
+	for i := range m.Inputs {
+		b.WriteString(m.Inputs[i].View())
+		if i < len(m.Inputs)-1 {
+			b.WriteRune('\n')
+		}
+	}
+
+	button := &blurredButton
+	if m.focusIndex == len(m.Inputs) {
+		button = &focusedButton
+	}
+	fmt.Fprintf(&b, "\n\n%s\n\n", *button)
+
+	b.WriteString(helpStyle.Render("Press enter to select the defaults. Press Esc or Ctrl+c to quit"))
+
+	return b.String()
 }

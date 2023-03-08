@@ -45,40 +45,38 @@ var developerLoginCmd = &cobra.Command{
 	},
 }
 
+func runDeveloperCreate() error {
+	var (
+		err error
+		dev models.Developer
+		tkn string
+	)
+
+	dev.Name = Cfg.Username()
+	dev.Email = Cfg.Email()
+
+	dev.Password, dev.ConfirmPassword, err = Sys.GetConfirmedPassword()
+	if err != nil {
+		return err
+	}
+
+	tkn, err = DeveloperClient.CreateNewDeveloper(&dev)
+	if err != nil {
+		return err
+	}
+
+	Cfg.SetToken(tkn)
+	fmt.Println()
+	fmt.Println(message.Green("SUCCESS", "Saved token to config."))
+
+	return nil
+}
+
 var developerCreateCmd = &cobra.Command{
 	Use:   "create",
-	Short: "<name?> create a developer",
-	Long: `<name?> create a developer
-if no name is passed github username will be used`,
+	Short: "create a developer account using details from init command",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		var (
-			err error
-			dev models.Developer
-			tkn string
-		)
-
-		if len(args) == 1 {
-			dev.Name = args[0]
-			Cfg.SetUsername(dev.Name)
-		} else {
-			dev.Name = Cfg.Username()
-		}
-
-		dev.Password, dev.ConfirmPassword, err = Sys.GetConfirmedPassword()
-		if err != nil {
-			return err
-		}
-
-		tkn, err = DeveloperClient.CreateNewDeveloper(&dev)
-		if err != nil {
-			return err
-		}
-
-		Cfg.SetToken(tkn)
-		fmt.Println()
-		fmt.Println(message.Green("SUCCESS", "Saved token to config."))
-
-		return nil
+		return runDeveloperCreate()
 	},
 }
 

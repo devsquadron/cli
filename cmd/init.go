@@ -4,6 +4,8 @@ Copyright © 2022 nanvenomous mrgarelli@gmail.com
 package cmd
 
 import (
+	"net/mail"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/devsquadron/cli/system"
 	"github.com/spf13/cobra"
@@ -62,6 +64,13 @@ func runInit() error {
 			if val == "" {
 				toGetPrompts[i].SetFunc(ti.Placeholder)
 			} else {
+				if ti.Prompt == "Email: " {
+					addr, err := mail.ParseAddress(val)
+					if err != nil {
+						return err
+					}
+					val = addr.Address
+				}
 				toGetPrompts[i].SetFunc(val)
 			}
 		}

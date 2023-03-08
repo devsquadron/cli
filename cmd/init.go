@@ -12,8 +12,10 @@ import (
 )
 
 var (
-	noCacheFlag bool
-	cfgPrompts  []system.ConfigPrompt
+	noCacheFlag         bool
+	createDeveloperFlag bool
+	createTeamFlag      bool
+	cfgPrompts          []system.ConfigPrompt
 )
 
 func runInit() error {
@@ -57,6 +59,9 @@ func runInit() error {
 	m = system.InitialConfigurationTextInputModel(toGetPrompts, noCacheFlag)
 
 	outMod, err = tea.NewProgram(m).Run()
+	if err != nil {
+		return err
+	}
 
 	if m, ok := outMod.(system.ConfigurationTextInputModel); ok {
 		for i, ti := range m.Inputs {
@@ -75,7 +80,19 @@ func runInit() error {
 			}
 		}
 	}
-	return err
+	if createDeveloperFlag {
+		err = runDeveloperCreate()
+		if err != nil {
+			return err
+		}
+	}
+	if createTeamFlag {
+		err = runTeamCreate()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 var initCmd = &cobra.Command{
@@ -91,5 +108,14 @@ func init() {
 		&noCacheFlag, "no-cache", "n", false,
 		"ignores cache when setting config (so you can revisit initial decisions)",
 	)
+	initCmd.Flags().BoolVarP(
+		&createDeveloperFlag, "create-developer", "", false,
+		"create a developer account (using username & email) after setting local config",
+	)
+	initCmd.Flags().BoolVarP(
+		&createTeamFlag, "create-team", "", false,
+		"create a devsquadron team to encapsulate the tasks for your project (after setting local config)",
+	)
+
 	rootCmd.AddCommand(initCmd)
 }

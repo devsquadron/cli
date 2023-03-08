@@ -111,30 +111,29 @@ var teamGrowCmd = &cobra.Command{
 	},
 }
 
+func runTeamCreate() error {
+	var (
+		tmNm string
+		err  error
+	)
+	tmNm = Cfg.Team()
+	tm := models.Team{Name: tmNm}
+	err = TeamClient.CreateNewTeam(
+		&tm,
+		Cfg.Token(),
+	)
+	if err != nil {
+		return err
+	}
+	fmt.Println(message.Green("SUCCESS", fmt.Sprintf("created new team '%s'", tm.Name)))
+	return nil
+}
+
 var teamCreateCmd = &cobra.Command{
 	Use:   "create",
-	Short: "<name?> create a brand new team in the associated project directory",
+	Short: "create a new team using the name provided with ds init",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		var (
-			tmNm string
-			err  error
-		)
-		if len(args) < 1 {
-			tmNm = Cfg.Team()
-		} else {
-			tmNm = args[0]
-			Cfg.SetTeam(tmNm)
-		}
-		tm := models.Team{Name: tmNm}
-		err = TeamClient.CreateNewTeam(
-			&tm,
-			Cfg.Token(),
-		)
-		if err != nil {
-			return err
-		}
-		fmt.Println(message.Green("SUCCESS", fmt.Sprintf("created new team '%s'", tm.Name)))
-		return nil
+		return runTeamCreate()
 	},
 }
 

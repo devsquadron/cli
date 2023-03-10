@@ -195,7 +195,7 @@ type ConfigurationTextInputModel struct {
 
 func InitialConfigurationTextInputModel(cps []ConfigPrompt, noCacheFlag bool) ConfigurationTextInputModel {
 	var (
-		gitCfg string
+		gitCfg, exstCfg string
 	)
 	m := ConfigurationTextInputModel{
 		Inputs: []textinput.Model{},
@@ -208,7 +208,11 @@ func InitialConfigurationTextInputModel(cps []ConfigPrompt, noCacheFlag bool) Co
 		t.CharLimit = 32
 		t.Prompt = cps[i].Prompt + ": "
 		gitCfg, _ = cps[i].DefaultFunc()
-		t.Placeholder = gitCfg
+		exstCfg, _ = cps[i].CheckFunc()
+		if exstCfg == "" {
+			exstCfg = gitCfg
+		}
+		t.Placeholder = exstCfg
 
 		switch i {
 		case 0:

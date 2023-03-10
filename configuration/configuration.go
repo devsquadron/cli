@@ -73,23 +73,6 @@ func (cg *Configuration) getDefaultGlobalConfig() (string, string, error) {
 		cfgFile, cacheFile string
 	)
 
-	// getOsConfig := func() error {
-	// 	userDirs.Config, err = os.UserConfigDir()
-	// 	return err
-	// }
-
-	// err = exfs.RunOn(&exfs.OperatingSystemRoute{
-	// 	Windows: func() error {
-	// hm, err := os.UserHomeDir()
-	// if err != nil {
-	// return err
-	// }
-	// userDirs.Config = filepath.Join(hm, ".config")
-	// 		return nil
-	// 	},
-	// 	Linux: getOsConfig,
-	// 	Mac:   getOsConfig,
-	// })
 	userDirs.Config, err = os.UserConfigDir()
 	if err != nil {
 		return "", "", err

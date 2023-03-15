@@ -18,12 +18,8 @@ github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ3
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/devsquadron/models v0.0.1 h1:GVgTfOczH/t0AWqYHHmYeLiTQC7kVUxSQWiUVGQDUV4=
-github.com/devsquadron/models v0.0.1/go.mod h1:NGaMEJh+FBej6Zc3Ait0mBo7/s9AbptjJuV4HEPPcF0=
 github.com/devsquadron/models v0.0.2-0.20230227200113-1a937e6d422f h1:KveTLU2tczQov8zGOLqmoARMmOiHXBEY5CNoondPcrU=
 github.com/devsquadron/models v0.0.2-0.20230227200113-1a937e6d422f/go.mod h1:NGaMEJh+FBej6Zc3Ait0mBo7/s9AbptjJuV4HEPPcF0=
-github.com/devsquadron/requests v0.0.1 h1:MZrVCrO/Jl9g94pXGwwfDlBGQIKPTtV5SPZLiP/LY5M=
-github.com/devsquadron/requests v0.0.1/go.mod h1:Sm7Ioqp8BQ1wnUHvQmu+YCNwpeBZchTuTNzwcncxWL8=
 github.com/devsquadron/requests v0.0.2-0.20230227200113-339c33bfcbcb h1:4j4gcI4L52VC3mHqujso29RNIAkXKN1glM+bILdkuRY=
 github.com/devsquadron/requests v0.0.2-0.20230227200113-339c33bfcbcb/go.mod h1:Sm7Ioqp8BQ1wnUHvQmu+YCNwpeBZchTuTNzwcncxWL8=
 github.com/golang/snappy v0.0.1/go.mod h1:/XxbfmMg8lxefKM7IXC3fBNl/7bRcc72aCRzEWrmP2Q=

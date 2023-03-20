@@ -14,34 +14,38 @@ import (
 	"github.com/spf13/cobra"
 )
 
+func runDeveloperLogin() error {
+	var (
+		err error
+		dev models.Developer
+		tkn string
+	)
+
+	dev.Name = Cfg.Username()
+
+	dev.Password, err = Sys.GetPassword()
+	if err != nil {
+		return err
+	}
+
+	tkn, err = DeveloperClient.LoginDeveloper(&dev)
+	if err != nil {
+		return err
+	}
+
+	Cfg.SetToken(tkn)
+	fmt.Println()
+	fmt.Println(message.Green("SUCCESS", "Saved token to config."))
+
+	return nil
+}
+
 var developerLoginCmd = &cobra.Command{
 	Use:   "login",
 	Short: "login a developer",
 	Long:  `login a developer`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		var (
-			err error
-			dev models.Developer
-			tkn string
-		)
-
-		dev.Name = Cfg.Username()
-
-		dev.Password, err = Sys.GetPassword()
-		if err != nil {
-			return err
-		}
-
-		tkn, err = DeveloperClient.LoginDeveloper(&dev)
-		if err != nil {
-			return err
-		}
-
-		Cfg.SetToken(tkn)
-		fmt.Println()
-		fmt.Println(message.Green("SUCCESS", "Saved token to config."))
-
-		return nil
+		return runDeveloperLogin()
 	},
 }
 
@@ -73,96 +77,113 @@ func runDeveloperCreate() error {
 }
 
 var developerCreateCmd = &cobra.Command{
-	Use:   "create",
+	Use:   "create-developer",
 	Short: "create a developer account using details from init command",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return runDeveloperCreate()
 	},
 }
 
-var developerCmd = &cobra.Command{
-	Use:   "developer",
-	Short: "setting up developers",
-	Long:  `setting up developers`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		return cmd.Help()
-	},
+func approveDenyValidArgsFunc(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	if len(args) == 0 {
+		return Cfg.RequestingDevelopers(), cobra.ShellCompDirectiveNoFileComp
+	}
+	return []string{}, cobra.ShellCompDirectiveNoFileComp
 }
 
-var teamGrowCmd = &cobra.Command{
-	Use:   "grow",
-	Short: "<name> add a developer to a team by username",
-	Long:  `<name> add a developer to a team by username`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) < 1 {
-			return errors.New("expected one argument <name>")
-		}
-		var err error
-		err = TeamClient.GrowTeam(
-			Cfg.Token(),
-			Cfg.Team(),
-			&models.Developer{Name: args[0]},
-		)
-		if err != nil {
-			return err
-		}
-		fmt.Println(message.Green("[SUCCESS]", fmt.Sprintf("added %s to team %s", args[0], Cfg.Team())))
-		return nil
-	},
-}
-
-func runTeamCreate() error {
+func runApproveDenyRequest(args []string, appDy models.ApproveDeny) error {
 	var (
-		tmNm string
-		err  error
+		err   error
+		dev   string
+		chDev string
 	)
-	tmNm = Cfg.Team()
-	tm := models.Team{Name: tmNm}
-	err = TeamClient.CreateNewTeam(
-		&tm,
+
+	if len(args) != 1 {
+		return errors.New("must pass a requesting developer, run 'ds info' to see requests")
+	}
+	dev = args[0]
+
+	err = errors.New(fmt.Sprintf(
+		"can only approve / deny requesting developers. %s not in %s. run 'ds info' to see requests",
+		dev,
+		Cfg.RequestingDevelopers(),
+	))
+	for _, chDev = range Cfg.RequestingDevelopers() {
+		if chDev == dev {
+			err = nil
+		}
+	}
+	if err != nil {
+		return err
+	}
+
+	if appDy == models.APPROVE {
+		for _, chDev = range Cfg.Developers() {
+			if chDev == dev {
+				return errors.New(fmt.Sprintf(
+					"cannot add developer %s, already on team %s",
+					dev,
+					Cfg.Team(),
+				))
+			}
+		}
+	}
+
+	err = TeamClient.RespondJoinRequest(
 		Cfg.Token(),
+		Cfg.Team(),
+		&models.RespondJoinRequestReq{RequestDev: dev, ApproveDeny: appDy},
 	)
 	if err != nil {
 		return err
 	}
-	fmt.Println(message.Green("SUCCESS", fmt.Sprintf("created new team '%s'", tm.Name)))
+
+	msg := "denied access"
+	if appDy == models.APPROVE {
+		msg = "given access"
+	}
+	fmt.Println(message.Green("SUCCESS", fmt.Sprintf(
+		"Developer %s was %s to team %s",
+		dev,
+		msg,
+		Cfg.Team(),
+	)))
+
 	return nil
 }
 
-var teamCreateCmd = &cobra.Command{
-	Use:   "create",
-	Short: "create a new team using the name provided with ds init",
+var requestsDenyCmd = &cobra.Command{
+	Use:               "deny",
+	Short:             "<developer> disallow joining the team",
+	ValidArgsFunction: approveDenyValidArgsFunc,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return runTeamCreate()
+		return runApproveDenyRequest(args, models.DENY)
 	},
 }
 
-var teamCmd = &cobra.Command{
-	Use:   "team",
-	Short: "setting up teams",
-	Long:  `setting up teams`,
+var requestsApproveCmd = &cobra.Command{
+	Use:               "approve",
+	Short:             "<developer> add requesting developer to the team",
+	ValidArgsFunction: approveDenyValidArgsFunc,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return cmd.Help()
+		return runApproveDenyRequest(args, models.APPROVE)
 	},
 }
 
 var setupCmd = &cobra.Command{
 	Use:   "setup",
 	Short: "actions related to setting up",
-	Long:  `actions related to setting up`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Help()
 	},
 }
 
 func init() {
-	developerCmd.AddCommand(developerCreateCmd)
-	developerCmd.AddCommand(developerLoginCmd)
-	setupCmd.AddCommand(developerCmd)
+	setupCmd.AddCommand(developerCreateCmd)
+	setupCmd.AddCommand(developerLoginCmd)
 
-	teamCmd.AddCommand(teamCreateCmd)
-	teamCmd.AddCommand(teamGrowCmd)
-	setupCmd.AddCommand(teamCmd)
+	setupCmd.AddCommand(requestsApproveCmd)
+	setupCmd.AddCommand(requestsDenyCmd)
 
 	rootCmd.AddCommand(setupCmd)
 }

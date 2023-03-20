@@ -33,7 +33,10 @@ var infoCmd = &cobra.Command{
 		fmt.Println(message.Green("Team", tm))
 		fmt.Println("[Developers]", tmInfo.Developers)
 		fmt.Println("[Task Count]", tmInfo.TaskCount)
+		fmt.Println("[Requests]", tmInfo.Requests)
+
 		Cfg.SetDevelopers(tmInfo.Developers)
+		Cfg.SetRequestingDevelopers(tmInfo.Requests)
 
 		return nil
 	},

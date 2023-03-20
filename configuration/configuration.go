@@ -99,8 +99,9 @@ func (cg *Configuration) getDefaultGlobalConfig() (string, string, error) {
 }
 
 type CompletionCache struct {
-	Tags       []string `yaml:"tags"`
-	Developers []string `yaml:"developers"`
+	Tags                 []string `yaml:"tags"`
+	Developers           []string `yaml:"developers"`
+	RequestingDevelopers []string `yaml:"requesting_developers"`
 }
 
 type ProjectConfig struct {
@@ -120,6 +121,8 @@ type ConfigurationType interface {
 	SetTags([]string)
 	Developers() []string
 	SetDevelopers([]string)
+	RequestingDevelopers() []string
+	SetRequestingDevelopers([]string)
 	Token() string
 	Team() string
 	TeamE() (string, error)
@@ -312,6 +315,16 @@ func (cg *Configuration) Developers() []string {
 func (cg *Configuration) SetDevelopers(devs []string) {
 	exception.CheckErr(errCompCache)
 	cg.CompletionCache.Developers = devs
+}
+
+func (cg *Configuration) RequestingDevelopers() []string {
+	exception.CheckErr(errCompCache)
+	return cg.CompletionCache.RequestingDevelopers
+}
+
+func (cg *Configuration) SetRequestingDevelopers(devs []string) {
+	exception.CheckErr(errCompCache)
+	cg.CompletionCache.RequestingDevelopers = devs
 }
 
 func (cg *Configuration) Tags() []string {

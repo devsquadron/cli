@@ -4,19 +4,42 @@ Copyright © 2022 nanvenomous mrgarelli@gmail.com
 package cmd
 
 import (
+	"fmt"
 	"net/mail"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/devsquadron/cli/message"
 	"github.com/devsquadron/cli/system"
+	"github.com/devsquadron/models"
 	"github.com/spf13/cobra"
 )
 
 var (
 	noCacheFlag         bool
 	createDeveloperFlag bool
+	loginDeveloperFlag  bool
 	createTeamFlag      bool
+	joinTeamFlag        bool
 	cfgPrompts          []system.ConfigPrompt
 )
+
+func runTeamCreate() error {
+	var (
+		tmNm string
+		err  error
+	)
+	tmNm = Cfg.Team()
+	tm := models.Team{Name: tmNm}
+	err = TeamClient.CreateNewTeam(
+		&tm,
+		Cfg.Token(),
+	)
+	if err != nil {
+		return err
+	}
+	fmt.Println(message.Green("SUCCESS", fmt.Sprintf("created new team '%s'", tm.Name)))
+	return nil
+}
 
 func runInit() error {
 	var (
@@ -69,12 +92,15 @@ func runInit() error {
 			if val == "" {
 				toGetPrompts[i].SetFunc(ti.Placeholder)
 			} else {
-				if ti.Prompt == "Email: " {
+				switch ti.Prompt {
+				case "Email: ":
 					addr, err := mail.ParseAddress(val)
 					if err != nil {
 						return err
 					}
 					val = addr.Address
+				case "Username: ":
+					Cfg.SetToken("")
 				}
 				toGetPrompts[i].SetFunc(val)
 			}
@@ -85,12 +111,26 @@ func runInit() error {
 		if err != nil {
 			return err
 		}
+	} else if loginDeveloperFlag {
+		err = runDeveloperLogin()
+		if err != nil {
+			return err
+		}
 	}
+
 	if createTeamFlag {
 		err = runTeamCreate()
 		if err != nil {
 			return err
 		}
+	}
+
+	if joinTeamFlag {
+		err = TeamClient.JoinTeam(Cfg.Token(), Cfg.Team())
+		if err != nil {
+			return err
+		}
+		fmt.Println(message.Green("SUCCESS", fmt.Sprintf("requested to join team %s", Cfg.Team())))
 	}
 	return nil
 }
@@ -112,9 +152,19 @@ func init() {
 		&createDeveloperFlag, "create-developer", "", false,
 		"create a developer account (using username & email) after setting local config",
 	)
+
+	initCmd.Flags().BoolVarP(
+		&loginDeveloperFlag, "login-developer", "", false,
+		"create login the developer username",
+	)
 	initCmd.Flags().BoolVarP(
 		&createTeamFlag, "create-team", "", false,
 		"create a devsquadron team to encapsulate the tasks for your project (after setting local config)",
+	)
+
+	initCmd.Flags().BoolVarP(
+		&joinTeamFlag, "join-team", "", false,
+		"join existing devsquadron team",
 	)
 
 	rootCmd.AddCommand(initCmd)

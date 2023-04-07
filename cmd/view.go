@@ -10,7 +10,12 @@ import (
 
 	"github.com/devsquadron/models"
 
+	"github.com/charmbracelet/glamour"
 	"github.com/spf13/cobra"
+)
+
+var (
+	viewFlagRaw bool
 )
 
 const (
@@ -22,9 +27,10 @@ var viewCmd = &cobra.Command{
 	Short: fmt.Sprintf("%s view the task info by id", VIEW_CMD_ARGS),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var (
-			err     error
-			taskId  uint64
-			origTsk *models.Task
+			err             error
+			taskId          uint64
+			origTsk         *models.Task
+			prettyCriterion string
 		)
 
 		if len(args) > 0 {
@@ -45,11 +51,25 @@ var viewCmd = &cobra.Command{
 			return err
 		}
 
-		message.Task(origTsk)
+		if viewFlagRaw {
+			message.Task(origTsk)
+		} else {
+			message.TaskAbb(origTsk)
+			prettyCriterion, err = glamour.Render(origTsk.Criterion, "dark")
+			if err != nil {
+				return err
+			}
+			fmt.Print(prettyCriterion)
+		}
 		return nil
 	},
 }
 
 func init() {
+	viewCmd.Flags().BoolVarP(
+		&viewFlagRaw, "raw", "r", false,
+		"list tasks assigned to the specified developer",
+	)
+
 	rootCmd.AddCommand(viewCmd)
 }

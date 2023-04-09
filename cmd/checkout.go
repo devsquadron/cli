@@ -59,9 +59,7 @@ var checkoutCmd = &cobra.Command{
 			return err
 		}
 
-		message.Task(origTsk)
-
-		return nil
+		return message.PrettyTask(origTsk)
 	},
 }
 

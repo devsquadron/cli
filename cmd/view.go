@@ -10,7 +10,6 @@ import (
 
 	"github.com/devsquadron/models"
 
-	"github.com/charmbracelet/glamour"
 	"github.com/spf13/cobra"
 )
 
@@ -27,10 +26,9 @@ var viewCmd = &cobra.Command{
 	Short: fmt.Sprintf("%s view the task info by id", VIEW_CMD_ARGS),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var (
-			err             error
-			taskId          uint64
-			origTsk         *models.Task
-			prettyCriterion string
+			err     error
+			taskId  uint64
+			origTsk *models.Task
 		)
 
 		if len(args) > 0 {
@@ -54,12 +52,7 @@ var viewCmd = &cobra.Command{
 		if viewFlagRaw {
 			message.Task(origTsk)
 		} else {
-			message.TaskAbb(origTsk)
-			prettyCriterion, err = glamour.Render(origTsk.Criterion, "dark")
-			if err != nil {
-				return err
-			}
-			fmt.Print(prettyCriterion)
+			return message.PrettyTask(origTsk)
 		}
 		return nil
 	},

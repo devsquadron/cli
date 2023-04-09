@@ -3,6 +3,7 @@ package message
 import (
 	"fmt"
 
+	"github.com/charmbracelet/glamour"
 	"github.com/devsquadron/models"
 )
 
@@ -39,11 +40,11 @@ func printTask(tsk *models.Task, full bool) {
 	if tsk.Tags != nil && len(tsk.Tags) != 0 {
 		fmt.Printf("%s\t  [tags]%s %s\n", ColorGreen, ColorReset, tsk.Tags)
 	}
-	if tsk.Status == models.Status.Developing {
-		fmt.Printf("%s\t[status]%s %s %s%s\n", colorViolet, ColorReset, tsk.Status, fmt.Sprintf("%d", tsk.Percent), "%")
-	} else {
-		fmt.Printf("%s\t[status]%s %s\n", colorViolet, ColorReset, tsk.Status)
-	}
+	// if tsk.Status == models.Status.Developing {
+	// 	fmt.Printf("%s\t[status]%s %s %s%s\n", colorViolet, ColorReset, tsk.Status, fmt.Sprintf("%d", tsk.Percent), "%")
+	// } else {
+	fmt.Printf("%s\t[status]%s %s\n", colorViolet, ColorReset, tsk.Status)
+	// }
 	if tsk.Developer != "" {
 		fmt.Printf("%s\t   [dev]%s %s\n", colorBlue, ColorReset, tsk.Developer)
 	}
@@ -58,6 +59,20 @@ func Task(tsk *models.Task) {
 
 func TaskAbb(tsk *models.Task) {
 	printTask(tsk, false)
+}
+
+func PrettyTask(tsk *models.Task) error {
+	var (
+		err             error
+		prettyCriterion string
+	)
+	printTask(tsk, false)
+	prettyCriterion, err = glamour.Render(tsk.Criterion, "dark")
+	if err != nil {
+		return err
+	}
+	fmt.Print(prettyCriterion)
+	return nil
 }
 
 func Header() {

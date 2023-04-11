@@ -65,9 +65,17 @@ var editCmd = &cobra.Command{
 			origTsk *models.Task
 			taskId  uint64
 		)
-		taskId, err = Sys.GetTaskId(Sys.GetArg(args, EDIT_CMD_ARGS))
-		if err != nil {
-			return err
+
+		if len(args) > 0 {
+			taskId, err = Sys.GetTaskId(Sys.GetArg(args, VIEW_CMD_ARGS))
+			if err != nil {
+				return err
+			}
+		} else {
+			taskId, err = Cfg.TaskNumber()
+			if err != nil {
+				return err
+			}
 		}
 
 		tm := Cfg.Team()

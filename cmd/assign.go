@@ -4,22 +4,17 @@ Copyright © 2022 nanvenomous mrgarelli@gmail.com
 package cmd
 
 import (
+	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/devsquadron/cli/message"
-
 	"github.com/devsquadron/models"
-
 	"github.com/spf13/cobra"
 )
 
 const (
-	ASSIGN_CMD_ARGS            = "<id>"
-	ASSIGN_FLAG_NAME_DEVELOPER = "developer"
-)
-
-var (
-	assignDevFlag string
+	ASSIGN_CMD_ARGS = "<id> <developer>"
 )
 
 var assignCmd = &cobra.Command{
@@ -27,23 +22,29 @@ var assignCmd = &cobra.Command{
 	Short: fmt.Sprintf("%s designate the dev to work on the task", ASSIGN_CMD_ARGS),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var (
-			err     error
-			taskId  uint64
-			dsUsrNm string
-			origTsk *models.Task
+			err       error
+			taskIdStr string
+			taskId    uint64
+			validDev  = false
+			toAssign  string
+			origTsk   *models.Task
 		)
 
-		taskId, err = Sys.GetTaskId(Sys.GetArg(args, ASSIGN_CMD_ARGS))
+		taskIdStr, toAssign = Sys.GetTwoArgs(args, ASSIGN_CMD_ARGS)
+		taskId, err = strconv.ParseUint(taskIdStr, 10, 64)
 		if err != nil {
 			return err
 		}
 
-		if assignDevFlag != "" {
-			dsUsrNm = assignDevFlag
-		} else {
-			dsUsrNm, err = Cfg.UsernameE()
-			if err != nil {
-				return err
+		if toAssign != "" {
+			for _, dv := range Cfg.Developers() {
+				if dv == toAssign {
+					validDev = true
+				}
+
+			}
+			if !validDev {
+				return errors.New(fmt.Sprintf("%s is not in %s, run 'ds info' to see all developers on the team", toAssign, Cfg.Developers()))
 			}
 		}
 
@@ -52,31 +53,26 @@ var assignCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		origTsk.Developer = dsUsrNm
+		origTsk.Developer = toAssign
 
 		err = TaskClient.UpdateTask(Cfg.Token(), origTsk, tm)
 		if err != nil {
 			return err
 		}
 
-		message.Task(origTsk)
+		message.TaskAbb(origTsk)
 
 		return nil
+	},
+
+	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return []string{}, cobra.ShellCompDirectiveNoFileComp
+		}
+		return Cfg.Developers(), cobra.ShellCompDirectiveNoFileComp
 	},
 }
 
 func init() {
-	assignCmd.Flags().StringVarP(
-		&assignDevFlag, ASSIGN_FLAG_NAME_DEVELOPER, "d", "",
-		"assign task to the specified developer",
-	)
-	assignCmd.RegisterFlagCompletionFunc(ASSIGN_FLAG_NAME_DEVELOPER, func(
-		cmd *cobra.Command,
-		args []string,
-		toComplete string,
-	) ([]string, cobra.ShellCompDirective) {
-		return Cfg.Developers(), cobra.ShellCompDirectiveNoFileComp
-	})
-
 	rootCmd.AddCommand(assignCmd)
 }

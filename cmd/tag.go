@@ -92,7 +92,7 @@ var tagCmd = &cobra.Command{
 			return err
 		}
 
-		message.TaskAbb(origTsk)
+		message.TaskAbb(origTsk, true)
 		return nil
 	},
 	// TODO test this out

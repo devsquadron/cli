@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/devsquadron/cli/message"
 
@@ -51,7 +52,7 @@ func listAllTasks() error {
 	}
 
 	// ----------- PAST THIS POINT IS JUST FOR LISTING
-	if listTagFlag != "" || listDevFlag != "" {
+	if listTagFlag != "" || listDevFlag != "" || len(listStatusFlag) > 0 {
 		adjustTagsForPrinting()
 		message.ListTasksByContext(allTsks, listTagFlag, listDevFlag)
 	} else {
@@ -59,7 +60,7 @@ func listAllTasks() error {
 		message.Header()
 		fmt.Println(fmt.Sprintf("status %s | tag %s | dev %s", listStatusFlag, listTagFlag, listDevFlag))
 		for _, tsk = range *allTsks {
-			message.TaskAbb(&tsk)
+			message.TaskAbb(&tsk, true)
 		}
 	}
 
@@ -122,12 +123,38 @@ func init() {
 		return Cfg.Tags(), cobra.ShellCompDirectiveNoFileComp
 	})
 
-	listCmd.Flags().StringArrayVarP(&listStatusFlag, LIST_FLAG_NAME_STATUS, "s", []string{}, "queries for tasks with the specified status")
+	listCmd.Flags().StringSliceVarP(&listStatusFlag, LIST_FLAG_NAME_STATUS, "s", []string{}, "queries for tasks with the specified status")
 	listCmd.RegisterFlagCompletionFunc(LIST_FLAG_NAME_STATUS, func(
 		cmd *cobra.Command,
 		args []string,
 		toComplete string,
 	) ([]string, cobra.ShellCompDirective) {
+		var (
+			comps, alryCompd, rets, flRets []string
+			lastComp, compPrefix           string
+		)
+		if strings.Contains(toComplete, ",") {
+			comps = strings.Split(toComplete, ",")
+			alryCompd = comps[0 : len(comps)-1]
+			lastComp = comps[len(comps)-1]
+
+		out:
+			for _, stts := range models.Statuses {
+				for _, alryStts := range alryCompd {
+					if stts == alryStts {
+						continue out
+					}
+				}
+				if strings.HasPrefix(stts, lastComp) {
+					rets = append(rets, stts)
+				}
+			}
+			compPrefix = strings.Join(alryCompd, ",")
+			for _, iRet := range rets {
+				flRets = append(flRets, compPrefix+","+iRet)
+			}
+			return flRets, cobra.ShellCompDirectiveNoFileComp
+		}
 		return models.Statuses, cobra.ShellCompDirectiveNoFileComp
 	})
 

@@ -2,9 +2,11 @@ package message
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/charmbracelet/glamour"
 	"github.com/devsquadron/models"
+	"golang.org/x/term"
 )
 
 const (
@@ -34,19 +36,14 @@ func Red(tag string, message string) string {
 	return colorTagPrint(tag, message, ColorRed)
 }
 
-// TODO: find best way to prettyprint tasks
 func printTask(tsk *models.Task, full bool, includeStatus bool) {
 	fmt.Printf("%s[%d]%s %s\n", ColorYellow, tsk.ID, ColorReset, tsk.Title)
 	if tsk.Tags != nil && len(tsk.Tags) != 0 {
 		fmt.Printf("%s\t  [tags]%s %s\n", ColorGreen, ColorReset, tsk.Tags)
 	}
-	// if tsk.Status == models.Status.Developing {
-	// 	fmt.Printf("%s\t[status]%s %s %s%s\n", colorViolet, ColorReset, tsk.Status, fmt.Sprintf("%d", tsk.Percent), "%")
-	// } else {
 	if includeStatus {
 		fmt.Printf("%s\t[status]%s %s\n", colorViolet, ColorReset, tsk.Status)
 	}
-	// }
 	if tsk.Developer != "" {
 		fmt.Printf("%s\t   [dev]%s %s\n", colorBlue, ColorReset, tsk.Developer)
 	}
@@ -78,7 +75,18 @@ func PrettyTask(tsk *models.Task) error {
 }
 
 func Header() {
-	fmt.Println("________________________________________________")
+	var (
+		err error
+		w   int
+	)
+	w, _, err = term.GetSize(int(os.Stdin.Fd()))
+	if err != nil {
+		fmt.Println("_________________________________________")
+		return
+	}
+	for i := 0; i < w; i++ {
+		fmt.Print("_")
+	}
 }
 
 func ListTasksByContext(allTsks *[]models.Task, listTagFlag string, listDevFlag string) {
@@ -93,8 +101,8 @@ func ListTasksByContext(allTsks *[]models.Task, listTagFlag string, listDevFlag 
 			}
 		}
 		if len(curTsks) > 0 {
-			fmt.Println("________________________________________________")
-			fmt.Println(fmt.Sprintf("status %s", sts))
+			Header()
+			fmt.Println(sts)
 			for _, st := range curTsks {
 				TaskAbb(&st, false)
 			}

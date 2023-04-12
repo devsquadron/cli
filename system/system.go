@@ -6,20 +6,16 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"syscall"
-
-	"github.com/devsquadron/cli/configuration"
-	"github.com/devsquadron/cli/constants"
-	"github.com/devsquadron/cli/exception"
-	"github.com/devsquadron/requests"
-
-	"github.com/devsquadron/models"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/devsquadron/cli/configuration"
+	"github.com/devsquadron/cli/constants"
+	"github.com/devsquadron/cli/exception"
+	"github.com/devsquadron/models"
+	"github.com/devsquadron/requests"
 	"github.com/nanvenomous/exfs"
-	"golang.org/x/term"
 )
 
 const (
@@ -30,10 +26,8 @@ type SystemType interface {
 	GetArg(args []string, exp string) string
 	GetTwoArgs(args []string, exp string) (string, string)
 	GetTaskId(idS string) (uint64, error)
-	GetPassword() (string, error)
 	GitUsername() (string, error)
 	GitEmail() (string, error)
-	GetConfirmedPassword() (string, string, error)
 	EditTempMarkdownFileDS(txt string) (string, error)
 	CheckoutBranch(tsk *models.Task) error
 }
@@ -70,21 +64,6 @@ func (sys *System) GetTaskId(idS string) (uint64, error) {
 	return num, nil
 }
 
-func (sys *System) GetPassword() (string, error) {
-	var (
-		err     error
-		pswdByt []byte
-	)
-	fmt.Printf("Enter Password: ")
-	pswdByt, err = term.ReadPassword(int(syscall.Stdin))
-	fmt.Println("")
-	if err != nil {
-		return "", err
-	}
-
-	return string(pswdByt), nil
-}
-
 func (sys *System) GitUsername() (string, error) {
 	var (
 		err  error
@@ -101,32 +80,6 @@ func (sys *System) GitEmail() (string, error) {
 	)
 	outs, _, err = sys.FS.Capture("git", []string{"config", "user.email"})
 	return strings.TrimSpace(outs), err
-}
-
-func (sys *System) GetConfirmedPassword() (string, string, error) {
-	var (
-		err         error
-		pswdByt     []byte
-		cnfmPswdByt []byte
-	)
-	fmt.Printf("Enter Password: ")
-	pswdByt, err = term.ReadPassword(int(syscall.Stdin))
-	fmt.Println("")
-	if err != nil {
-		return "", "", err
-	}
-
-	fmt.Printf("Confirm Password: ")
-	cnfmPswdByt, err = term.ReadPassword(int(syscall.Stdin))
-	fmt.Println("")
-	if err != nil {
-		return "", "", err
-	}
-
-	if string(pswdByt) != string(cnfmPswdByt) {
-		return "", "", errors.New("Passwords did not match.")
-	}
-	return string(pswdByt), string(cnfmPswdByt), nil
 }
 
 func (sys *System) EditTempMarkdownFileDS(txt string) (string, error) {
@@ -214,12 +167,18 @@ func InitialConfigurationTextInputModel(cps []ConfigPrompt, noCacheFlag bool) Co
 		}
 		t.Placeholder = exstCfg
 
+		switch cps[i].Prompt {
+		case "Email":
+			t.CharLimit = 64
+		case "Enter Password", "Confirm Password":
+			t.CharLimit = 64
+			t.EchoMode = textinput.EchoPassword
+			t.EchoCharacter = '•'
+		}
 		switch i {
 		case 0:
 			t.PromptStyle = focusedStyle
 			t.TextStyle = focusedStyle
-		case 1:
-			t.CharLimit = 64
 		}
 
 		m.Inputs = append(m.Inputs, t)

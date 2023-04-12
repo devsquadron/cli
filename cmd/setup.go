@@ -8,9 +8,7 @@ import (
 	"fmt"
 
 	"github.com/devsquadron/cli/message"
-
 	"github.com/devsquadron/models"
-
 	"github.com/spf13/cobra"
 )
 
@@ -23,10 +21,7 @@ func runDeveloperLogin() error {
 
 	dev.Name = Cfg.Username()
 
-	dev.Password, err = Sys.GetPassword()
-	if err != nil {
-		return err
-	}
+	dev.Password = password
 
 	tkn, err = DeveloperClient.LoginDeveloper(&dev)
 	if err != nil {
@@ -45,6 +40,12 @@ var developerLoginCmd = &cobra.Command{
 	Short: "login a developer",
 	Long:  `login a developer`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		var err error
+		err = runConfigurationTextInput(passwdPrompts[0:1])
+		if err != nil {
+			return err
+		}
+
 		return runDeveloperLogin()
 	},
 }
@@ -59,9 +60,11 @@ func runDeveloperCreate() error {
 	dev.Name = Cfg.Username()
 	dev.Email = Cfg.Email()
 
-	dev.Password, dev.ConfirmPassword, err = Sys.GetConfirmedPassword()
-	if err != nil {
-		return err
+	dev.Password = password
+	dev.ConfirmPassword = confirmPassword
+
+	if dev.Password != dev.ConfirmPassword {
+		return errors.New("Passwords did not match.")
 	}
 
 	tkn, err = DeveloperClient.CreateNewDeveloper(&dev)
@@ -80,6 +83,11 @@ var developerCreateCmd = &cobra.Command{
 	Use:   "create-developer",
 	Short: "create a developer account using details from init command",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		var err error
+		err = runConfigurationTextInput(passwdPrompts)
+		if err != nil {
+			return err
+		}
 		return runDeveloperCreate()
 	},
 }

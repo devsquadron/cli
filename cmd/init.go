@@ -15,12 +15,35 @@ import (
 )
 
 var (
-	noCacheFlag         bool
-	createDeveloperFlag bool
-	loginDeveloperFlag  bool
-	createTeamFlag      bool
-	joinTeamFlag        bool
-	cfgPrompts          []system.ConfigPrompt
+	noCacheFlag               bool
+	createDeveloperFlag       bool
+	loginDeveloperFlag        bool
+	createTeamFlag            bool
+	joinTeamFlag              bool
+	cfgPrompts                []system.ConfigPrompt
+	password, confirmPassword string
+
+	defaultCheckFunc = func() (string, error) {
+		return "", nil
+	}
+	passwdPrompts = []system.ConfigPrompt{
+		{
+			Prompt:      "Enter Password",
+			CheckFunc:   defaultCheckFunc,
+			DefaultFunc: defaultCheckFunc,
+			SetFunc: func(pwd string) {
+				password = pwd
+			},
+		},
+		{
+			Prompt:      "Confirm Password",
+			CheckFunc:   defaultCheckFunc,
+			DefaultFunc: defaultCheckFunc,
+			SetFunc: func(pwd string) {
+				confirmPassword = pwd
+			},
+		},
+	}
 )
 
 func runTeamCreate() error {
@@ -41,7 +64,7 @@ func runTeamCreate() error {
 	return nil
 }
 
-func runInit() error {
+func runConfigurationTextInput(cgPrmpts []system.ConfigPrompt) error {
 	var (
 		err          error
 		outMod       tea.Model
@@ -50,30 +73,7 @@ func runInit() error {
 		existingCfg  string
 	)
 
-	cfgPrompts = []system.ConfigPrompt{
-		{
-			Prompt:      "Username",
-			CheckFunc:   Cfg.UsernameE,
-			DefaultFunc: Sys.GitUsername,
-			SetFunc:     Cfg.SetUsername,
-		},
-		{
-			Prompt:      "Email",
-			CheckFunc:   Cfg.EmailE,
-			DefaultFunc: Sys.GitEmail,
-			SetFunc:     Cfg.SetEmail,
-		},
-		{
-			Prompt: "Team",
-			CheckFunc: func() (string, error) {
-				// when ds init is called we are either creating or updating a team
-				return "", nil
-			},
-			DefaultFunc: Cfg.TeamE,
-			SetFunc:     Cfg.SetTeam,
-		},
-	}
-	for _, cp := range cfgPrompts {
+	for _, cp := range cgPrmpts {
 		existingCfg, _ = cp.CheckFunc()
 		if existingCfg == "" || noCacheFlag {
 			toGetPrompts = append(toGetPrompts, cp)
@@ -106,6 +106,46 @@ func runInit() error {
 			}
 		}
 	}
+	return nil
+}
+
+func runInit() error {
+	var (
+		err error
+	)
+
+	cfgPrompts = []system.ConfigPrompt{
+		{
+			Prompt:      "Username",
+			CheckFunc:   Cfg.UsernameE,
+			DefaultFunc: Sys.GitUsername,
+			SetFunc:     Cfg.SetUsername,
+		},
+		{
+			Prompt:      "Email",
+			CheckFunc:   Cfg.EmailE,
+			DefaultFunc: Sys.GitEmail,
+			SetFunc:     Cfg.SetEmail,
+		},
+		{
+			Prompt:      "Team",
+			CheckFunc:   defaultCheckFunc,
+			DefaultFunc: Cfg.TeamE,
+			SetFunc:     Cfg.SetTeam,
+		},
+	}
+
+	if createDeveloperFlag {
+		cfgPrompts = append(cfgPrompts, passwdPrompts...)
+	} else if loginDeveloperFlag {
+		cfgPrompts = append(cfgPrompts, passwdPrompts[0])
+	}
+
+	err = runConfigurationTextInput(cfgPrompts)
+	if err != nil {
+		return err
+	}
+
 	if createDeveloperFlag {
 		err = runDeveloperCreate()
 		if err != nil {
